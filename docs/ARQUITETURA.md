@@ -89,8 +89,8 @@ Conteúdo decifrado:
 |---|---|---|
 | Núcleo | Regras, criptografia, arquivo | Concluída |
 | F1 | Criar e desbloquear o cofre | Concluída |
-| F2 | Cadastrar e listar, com gerador | Próxima |
-| F3 | Revelar, copiar com limpeza, excluir | Planejada |
+| F2 | Cadastrar e listar, com gerador | Concluída |
+| F3 | Revelar, copiar com limpeza, excluir | Próxima |
 | F4 | Bloqueio automático | Planejada |
 | F5 | Exportar e restaurar backup | Planejada |
 | F6 | Executáveis, CI, `pip-audit`, `docs/SEGURANCA.md` | Planejada |

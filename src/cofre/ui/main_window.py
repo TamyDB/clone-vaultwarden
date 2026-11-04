@@ -17,7 +17,7 @@ class MainWindow(QMainWindow):
         self.resize(480, 360)
 
         self.unlock_view = UnlockView(service)
-        self.main_view = MainView()
+        self.main_view = MainView(service)
         self.pages = QStackedWidget()
         self.pages.addWidget(self.unlock_view)
         self.pages.addWidget(self.main_view)
@@ -27,9 +27,11 @@ class MainWindow(QMainWindow):
         self.main_view.lock_requested.connect(self._lock)
 
     def _show_vault(self) -> None:
+        self.main_view.refresh()
         self.pages.setCurrentWidget(self.main_view)
 
     def _lock(self) -> None:
+        self.main_view.clear()
         self._service.lock()
         self.unlock_view.reset()
         self.pages.setCurrentWidget(self.unlock_view)
