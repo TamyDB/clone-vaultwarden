@@ -150,7 +150,7 @@ def test_confirmed_delete_removes_and_persists(view, service, path):
     view.delete_button.click()
 
     assert view.table.rowCount() == 1
-    assert view.status.text() == "Entrada excluída."
+    assert view.status.text() == "Conta excluída."
     reopened = VaultService(path)
     reopened.unlock(MASTER)
     assert [e.service for e in reopened.entries()] == ["Wi-Fi"]

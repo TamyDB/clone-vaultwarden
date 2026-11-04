@@ -65,7 +65,7 @@ def test_export_writes_file_and_shows_notice(qtbot, window, tmp_path, monkeypatc
     destination = tmp_path / "copia.cofre"
     pick_files(monkeypatch, save=destination)
 
-    window.main_view.export_button.click()
+    window.main_view.export_action.trigger()
 
     assert destination.exists()
     assert window.main_view.status.text() == EXPORTED_NOTICE
@@ -74,7 +74,7 @@ def test_export_writes_file_and_shows_notice(qtbot, window, tmp_path, monkeypatc
 def test_export_cancelled_does_nothing(qtbot, window, tmp_path, monkeypatch):
     unlock(qtbot, window)
     pick_files(monkeypatch, save="")
-    window.main_view.export_button.click()
+    window.main_view.export_action.trigger()
     assert window.main_view.status.text() == ""
     assert sorted(item.name for item in tmp_path.iterdir()) == ["v.cofre", "v.cofre.bak"]
 
@@ -84,7 +84,7 @@ def test_export_over_the_vault_is_refused(qtbot, window, path, monkeypatch):
     before = path.read_bytes()
     pick_files(monkeypatch, save=path)
 
-    window.main_view.export_button.click()
+    window.main_view.export_action.trigger()
 
     assert "local diferente" in window.main_view.status.text()
     assert path.read_bytes() == before
@@ -93,7 +93,7 @@ def test_export_over_the_vault_is_refused(qtbot, window, path, monkeypatch):
 def test_export_disk_failure_shows_generic_message(qtbot, window, tmp_path, monkeypatch):
     unlock(qtbot, window)
     pick_files(monkeypatch, save=tmp_path / "nao-existe" / "copia.cofre")
-    window.main_view.export_button.click()
+    window.main_view.export_action.trigger()
     assert window.main_view.status.text() == DISK_ERROR_MESSAGE
 
 
@@ -104,7 +104,7 @@ def test_restore_from_main_view_replaces_vault_and_locks(qtbot, window, tmp_path
     answer_password(monkeypatch, OTHER_MASTER)
     monkeypatch.setattr(BackupActions, "_confirm_replace", lambda _self: True)
 
-    window.main_view.restore_button.click()
+    window.main_view.restore_action.trigger()
     qtbot.waitUntil(lambda: window.pages.currentWidget() is window.unlock_view, timeout=10000)
     wait_restored(qtbot, window)
 
@@ -127,7 +127,7 @@ def test_restore_asks_confirmation_and_declining_changes_nothing(
     )
     monkeypatch.setattr(BackupActions, "_confirm_replace", lambda _self: False)
 
-    window.main_view.restore_button.click()
+    window.main_view.restore_action.trigger()
 
     assert asked == []
     assert path.read_bytes() == before
@@ -155,7 +155,7 @@ def test_restore_wrong_password_keeps_vault_open_and_reports(
     answer_password(monkeypatch, "senha errada qualquer")
     monkeypatch.setattr(BackupActions, "_confirm_replace", lambda _self: True)
 
-    window.main_view.restore_button.click()
+    window.main_view.restore_action.trigger()
     qtbot.waitUntil(
         lambda: window.main_view.status.text() == "Senha incorreta ou backup inválido.",
         timeout=10000,
@@ -177,7 +177,7 @@ def test_restore_cancelled_at_password_prompt_changes_nothing(
     answer_password(monkeypatch, OTHER_MASTER, accepted=False)
     monkeypatch.setattr(BackupActions, "_confirm_replace", lambda _self: True)
 
-    window.main_view.restore_button.click()
+    window.main_view.restore_action.trigger()
 
     assert path.read_bytes() == before
     assert window.pages.isEnabled()
@@ -230,7 +230,7 @@ def test_window_is_disabled_while_restoring(qtbot, window, tmp_path, monkeypatch
         lambda busy: states.append((busy, window.pages.isEnabled(), window.idle_lock.is_running))
     )
 
-    window.main_view.restore_button.click()
+    window.main_view.restore_action.trigger()
     wait_restored(qtbot, window)
     qtbot.waitUntil(lambda: len(states) == 2, timeout=10000)
 

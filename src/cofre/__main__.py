@@ -10,6 +10,7 @@ from PySide6.QtWidgets import QApplication, QMessageBox
 
 from cofre.selftest import SELF_TEST_FLAG, run_self_test
 from cofre.services.vault_service import VaultService
+from cofre.ui import theme
 from cofre.ui.main_window import MainWindow
 
 VAULT_FILE_NAME = "vault.cofre"
@@ -27,6 +28,7 @@ def main() -> int:
         return run_self_test()
     app = QApplication(sys.argv)
     app.setApplicationName("Cofre")
+    theme.apply(app)
 
     data_dir = Path(
         QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppDataLocation)

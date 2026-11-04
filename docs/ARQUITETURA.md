@@ -87,6 +87,21 @@ Conteúdo decifrado:
 | RN7 | Excluir exige confirmação | `services/vault_service.py` |
 | RN8 | Segredos fora de logs, mensagens de erro e `repr` | todas as camadas |
 
+## Design da interface
+
+O tema fica em `ui/theme.py` e segue o esquema de cores do sistema (claro ou escuro). Não há imagens nem fontes embutidas: tudo é paleta, folha de estilo Qt e um mostrador de cofre desenhado em código (`ui/vault_mark.py`).
+
+| Escolha | Motivo |
+|---|---|
+| Estilo Fusion com QSS | O estilo nativo ignora parte do QSS; o Fusion se comporta igual no Windows e no Linux |
+| Verde "cofre" para a ação principal, latão só para foco e para o mostrador | O latão funciona como sinal: quando aparece, é o foco do teclado |
+| Uma família do sistema; monoespaçada só na senha revelada | Distinguir `0/O` e `l/1` é função, não enfeite |
+| Sem ícones | Glifos Unicode mudam entre sistemas; rótulos de texto são mais claros |
+| Backup em menu, ações da conta em uma linha própria, estado vazio com chamada para criar a primeira conta | Menos botões à vista e um caminho óbvio por tela |
+| Vocabulário único: "conta" | Antes misturava "entrada" e "conta" |
+
+Acessibilidade: texto com contraste mínimo de 4,5:1 e foco do teclado e borda dos campos com 3:1, nos dois temas. `tests/test_ui_theme.py` calcula esses contrastes, então uma mudança de cor que os quebre falha nos testes.
+
 ## Plano do MVP
 
 | Feature | Entrega | Situação |
@@ -99,7 +114,8 @@ Conteúdo decifrado:
 | F4 | Bloqueio automático | Concluída |
 | F5 | Exportar e restaurar backup | Concluída |
 | F6 | Executáveis, CI, `pip-audit`, `docs/SEGURANCA.md` | Concluída (Windows sem teste) |
-| F7 | Editar entrada (pós-MVP) | Concluída |
+| F7 | Editar conta (pós-MVP) | Concluída |
+| F8 | Redesenho visual (tema claro e escuro, estado vazio, menu de backup) | Concluída |
 
 ## Desenvolvimento
 

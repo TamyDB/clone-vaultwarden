@@ -112,7 +112,7 @@ class VaultService:
     def delete_entry(self, service: str, username: str | None, *, confirmed: bool) -> None:
         vault = self._require_vault()
         if not confirmed:
-            raise ConfirmationRequiredError("Confirme a exclusão da entrada.")
+            raise ConfirmationRequiredError("Confirme a exclusão da conta.")
         self._save(vault.removed(service, username), self._key)
 
     def export_backup(self, destination: Path) -> None:

@@ -61,7 +61,7 @@ class Vault:
     def __post_init__(self) -> None:
         keys = [entry.key for entry in self.entries]
         if len(keys) != len(set(keys)):
-            raise DuplicateEntryError("Já existe uma entrada para este serviço e usuário.")
+            raise DuplicateEntryError("Já existe uma conta com este serviço e usuário.")
 
     def added(self, entry: Entry) -> Vault:
         return Vault((*self.entries, entry))
@@ -71,20 +71,20 @@ class Vault:
         for entry in self.entries:
             if entry.key == key:
                 return entry
-        raise EntryNotFoundError("Entrada não encontrada.")
+        raise EntryNotFoundError("Conta não encontrada.")
 
     def replaced(self, service: str, username: str | None, new_entry: Entry) -> Vault:
         """Troca uma entrada mantendo a posição; falha se a nova identidade colidir com outra."""
         key = entry_key(service, username)
         if not any(entry.key == key for entry in self.entries):
-            raise EntryNotFoundError("Entrada não encontrada.")
+            raise EntryNotFoundError("Conta não encontrada.")
         return Vault(tuple(new_entry if entry.key == key else entry for entry in self.entries))
 
     def removed(self, service: str, username: str | None) -> Vault:
         key = entry_key(service, username)
         remaining = tuple(entry for entry in self.entries if entry.key != key)
         if len(remaining) == len(self.entries):
-            raise EntryNotFoundError("Entrada não encontrada.")
+            raise EntryNotFoundError("Conta não encontrada.")
         return Vault(remaining)
 
     def sorted_entries(self) -> list[Entry]:

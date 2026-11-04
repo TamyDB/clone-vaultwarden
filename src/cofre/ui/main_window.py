@@ -24,7 +24,8 @@ class MainWindow(QMainWindow):
         super().__init__(parent)
         self._service = service
         self.setWindowTitle("Cofre")
-        self.resize(580, 400)
+        self.setMinimumSize(660, 480)
+        self.resize(780, 560)
 
         self.unlock_view = UnlockView(service)
         self.main_view = MainView(service)
@@ -42,13 +43,14 @@ class MainWindow(QMainWindow):
         self.main_view.restore_requested.connect(self.backup.restore_backup)
         self.unlock_view.restore_requested.connect(self.backup.restore_backup)
         self.backup.exported.connect(self._show_message)
-        self.backup.failed.connect(self._show_message)
+        self.backup.failed.connect(self._show_error)
         self.backup.busy.connect(self._set_busy)
         self.backup.restored.connect(lambda: self._lock(RESTORED_NOTICE))
 
     def _show_vault(self) -> None:
         self.main_view.refresh()
         self.pages.setCurrentWidget(self.main_view)
+        self.main_view.focus_list()
         self.idle_lock.start()
 
     def _lock(self, notice: str = "") -> None:
@@ -59,18 +61,24 @@ class MainWindow(QMainWindow):
         self.pages.setCurrentWidget(self.unlock_view)
 
     def _lock_for_inactivity(self) -> None:
-        # Diálogos abertos (revelar senha, nova entrada, confirmações) são fechados antes:
+        # Diálogos e menus abertos (revelar senha, nova conta, confirmações) são fechados antes:
         # um deles poderia estar mostrando uma senha na tela.
+        popup = QApplication.activePopupWidget()
+        if popup is not None:
+            popup.close()
         for widget in QApplication.topLevelWidgets():
             if isinstance(widget, QDialog) and widget.isVisible():
                 widget.reject()
         self._lock(IDLE_NOTICE)
 
-    def _show_message(self, message: str) -> None:
+    def _show_message(self, message: str, *, error: bool = False) -> None:
         if self.pages.currentWidget() is self.main_view:
-            self.main_view.status.setText(message)
+            self.main_view.show_status(message, error=error)
         else:
-            self.unlock_view.message.setText(message)
+            self.unlock_view.show_message(message, error=error)
+
+    def _show_error(self, message: str) -> None:
+        self._show_message(message, error=True)
 
     def _set_busy(self, busy: bool) -> None:
         # A restauração roda em segundo plano e mexe no cofre: nada mais pode agir nesse intervalo,

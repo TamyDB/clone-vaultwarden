@@ -269,7 +269,7 @@ def edit_dialog(qtbot, service):
 
 
 def test_edit_dialog_is_prefilled_with_password_hidden(edit_dialog):
-    assert edit_dialog.windowTitle() == "Editar entrada"
+    assert edit_dialog.windowTitle() == "Editar conta"
     assert edit_dialog.service_field.text() == "GitHub"
     assert edit_dialog.username_field.text() == "ana"
     assert edit_dialog.has_username.isChecked()
@@ -355,7 +355,7 @@ def test_edit_button_needs_selection_and_updates_table(qtbot, service, monkeypat
     view.edit_button.click()
 
     assert table_rows(view) == [("GitLab", "ana")]
-    assert view.status.text() == "Entrada atualizada."
+    assert view.status.text() == "Conta atualizada."
 
 
 def test_edit_cancelled_leaves_table_untouched(qtbot, service, monkeypatch):
