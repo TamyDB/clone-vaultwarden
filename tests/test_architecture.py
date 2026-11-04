@@ -46,6 +46,16 @@ def test_layers_only_depend_on_allowed_layers():
                 assert parts[1] in ALLOWED_LAYERS[layer], f"{path.name} importa {module}"
 
 
+def test_ui_only_reaches_core_through_services_and_domain():
+    for path in (ROOT / "ui").glob("*.py"):
+        modules = imported_modules(path)
+        assert "PySide6.QtNetwork" not in modules, f"{path.name} importa QtNetwork"
+        for module in modules:
+            parts = module.split(".")
+            if parts[0] == "cofre":
+                assert parts[1] in {"ui", "services", "domain"}, f"{path.name} importa {module}"
+
+
 def test_core_does_not_import_ui_network_or_logging():
     for _layer, path in core_files():
         roots = {module.split(".")[0] for module in imported_modules(path)}

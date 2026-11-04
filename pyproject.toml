@@ -12,6 +12,9 @@ dependencies = [
     "PySide6-Essentials>=6.12",
 ]
 
+[project.gui-scripts]
+cofre = "cofre.__main__:main"
+
 [project.optional-dependencies]
 dev = [
     "pytest>=8",

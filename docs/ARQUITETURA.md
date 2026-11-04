@@ -31,7 +31,7 @@ ui  ->  services  ->  storage  ->  crypto
 | `crypto` | Argon2id e AES-256-GCM | `crypto/vault_crypto.py` |
 | `storage` | Formato binário, gravação atômica, `.bak` | `storage/vault_file.py` |
 | `services` | Casos de uso, estado do cofre aberto | `services/vault_service.py` |
-| `ui` | Telas em PySide6 (Fase 3) | `ui/` |
+| `ui` | Telas em PySide6; operações lentas fora da thread da interface | `ui/` |
 
 Só `ui/` importa Qt, e o núcleo não importa rede nem logging. `tests/test_architecture.py` verifica essas regras.
 
@@ -77,11 +77,23 @@ Conteúdo decifrado:
 | RN1 | Serviço, usuário e senha obrigatórios; par (serviço, usuário) único | `domain/models.py` |
 | RN2 | Senha mestra com 12+ caracteres, confirmação e ciência de que não há recuperação | `domain/passwords.py`, `services/vault_service.py` |
 | RN3 | Gerador com `secrets`: padrão 20, faixa 12 a 64, ao menos um de cada classe | `domain/passwords.py` |
-| RN4 | Senhas ocultas por padrão | `ui/` (Fase 3) |
-| RN5 | Área de transferência limpa após 30 s, se o conteúdo não mudou | `ui/` (Fase 4) |
-| RN6 | Bloqueio após 5 min de inatividade | `ui/` (Fase 4) |
+| RN4 | Senhas ocultas por padrão | `ui/` (F2 e F3) |
+| RN5 | Área de transferência limpa após 30 s, se o conteúdo não mudou | `ui/` (F3) |
+| RN6 | Bloqueio após 5 min de inatividade | `ui/` (F4) |
 | RN7 | Excluir exige confirmação | `services/vault_service.py` |
 | RN8 | Segredos fora de logs, mensagens de erro e `repr` | todas as camadas |
+
+## Plano do MVP
+
+| Feature | Entrega | Situação |
+|---|---|---|
+| Núcleo | Regras, criptografia, arquivo | Concluída |
+| F1 | Criar e desbloquear o cofre | Concluída |
+| F2 | Cadastrar e listar, com gerador | Próxima |
+| F3 | Revelar, copiar com limpeza, excluir | Planejada |
+| F4 | Bloqueio automático | Planejada |
+| F5 | Exportar e restaurar backup | Planejada |
+| F6 | Executáveis, CI, `pip-audit`, `docs/SEGURANCA.md` | Planejada |
 
 ## Desenvolvimento
 
