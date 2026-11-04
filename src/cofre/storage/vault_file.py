@@ -112,6 +112,11 @@ def write_vault_file(path: Path, blob: bytes) -> None:
     _write_atomic(path, blob)
 
 
+def write_copy(path: Path, blob: bytes) -> None:
+    """Grava uma cópia avulsa (backup exportado), de forma atômica e sem mexer no `.bak`."""
+    _write_atomic(path, blob)
+
+
 def backup_path(path: Path) -> Path:
     return path.with_name(path.name + BACKUP_SUFFIX)
 

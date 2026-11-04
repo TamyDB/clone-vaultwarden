@@ -28,6 +28,8 @@ from cofre.ui.workers import DISK_ERROR_MESSAGE
 
 class MainView(QWidget):
     lock_requested = Signal()
+    export_requested = Signal()
+    restore_requested = Signal()
 
     def __init__(
         self,
@@ -44,18 +46,24 @@ class MainView(QWidget):
         self._row_keys: list[tuple[str, str | None]] = []
 
         self.add_button = QPushButton("Adicionar")
+        self.export_button = QPushButton("Exportar backup")
+        self.restore_button = QPushButton("Restaurar backup")
         self.lock_button = QPushButton("Bloquear")
         self.reveal_button = QPushButton("Revelar")
         self.copy_button = QPushButton("Copiar")
         self.delete_button = QPushButton("Excluir")
         self.add_button.clicked.connect(self._add_entry)
         self.lock_button.clicked.connect(self.lock_requested)
+        self.export_button.clicked.connect(self.export_requested)
+        self.restore_button.clicked.connect(self.restore_requested)
         self.reveal_button.clicked.connect(self._reveal)
         self.copy_button.clicked.connect(self._copy)
         self.delete_button.clicked.connect(self._delete)
 
         toolbar = QHBoxLayout()
         toolbar.addWidget(self.add_button)
+        toolbar.addWidget(self.export_button)
+        toolbar.addWidget(self.restore_button)
         toolbar.addStretch()
         toolbar.addWidget(self.lock_button)
 

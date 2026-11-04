@@ -19,6 +19,7 @@ from cofre.ui.workers import TaskRunner
 
 class UnlockView(QWidget):
     unlocked = Signal()
+    restore_requested = Signal()
 
     def __init__(self, service: VaultService, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -38,6 +39,7 @@ class UnlockView(QWidget):
         self.message = QLabel(wordWrap=True)
         self.message.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.submit = QPushButton()
+        self.restore_button = QPushButton("Restaurar backup…")
 
         self._form = QFormLayout()
         self._form.addRow("Senha mestra", self.password)
@@ -49,12 +51,14 @@ class UnlockView(QWidget):
         layout.addWidget(self.title)
         layout.addLayout(self._form)
         layout.addWidget(self.submit)
+        layout.addWidget(self.restore_button)
         layout.addWidget(self.message)
         layout.addStretch()
 
         self.password.returnPressed.connect(self._submit)
         self.confirmation.returnPressed.connect(self._submit)
         self.submit.clicked.connect(self._submit)
+        self.restore_button.clicked.connect(self.restore_requested)
         self.reset()
 
     def reset(self, notice: str = "") -> None:
@@ -102,5 +106,11 @@ class UnlockView(QWidget):
         self.confirmation.clear()
 
     def _set_busy(self, busy: bool) -> None:
-        for widget in (self.password, self.confirmation, self.acknowledgement, self.submit):
+        for widget in (
+            self.password,
+            self.confirmation,
+            self.acknowledgement,
+            self.submit,
+            self.restore_button,
+        ):
             widget.setEnabled(not busy)

@@ -5,11 +5,13 @@ from __future__ import annotations
 from PySide6.QtWidgets import QApplication, QDialog, QMainWindow, QStackedWidget, QWidget
 
 from cofre.services.vault_service import VaultService
+from cofre.ui.backup_actions import BackupActions
 from cofre.ui.idle_lock import IDLE_TIMEOUT_MS, IdleLock
 from cofre.ui.main_view import MainView
 from cofre.ui.unlock_view import UnlockView
 
 IDLE_NOTICE = "Cofre bloqueado por inatividade."
+RESTORED_NOTICE = "Backup restaurado. Abra o cofre com a senha mestra do backup."
 
 
 class MainWindow(QMainWindow):
@@ -22,11 +24,12 @@ class MainWindow(QMainWindow):
         super().__init__(parent)
         self._service = service
         self.setWindowTitle("Cofre")
-        self.resize(480, 360)
+        self.resize(580, 400)
 
         self.unlock_view = UnlockView(service)
         self.main_view = MainView(service)
         self.idle_lock = IdleLock(idle_timeout_ms, self)
+        self.backup = BackupActions(service, self)
         self.pages = QStackedWidget()
         self.pages.addWidget(self.unlock_view)
         self.pages.addWidget(self.main_view)
@@ -35,6 +38,13 @@ class MainWindow(QMainWindow):
         self.unlock_view.unlocked.connect(self._show_vault)
         self.main_view.lock_requested.connect(self._lock)
         self.idle_lock.idle.connect(self._lock_for_inactivity)
+        self.main_view.export_requested.connect(self.backup.export_backup)
+        self.main_view.restore_requested.connect(self.backup.restore_backup)
+        self.unlock_view.restore_requested.connect(self.backup.restore_backup)
+        self.backup.exported.connect(self._show_message)
+        self.backup.failed.connect(self._show_message)
+        self.backup.busy.connect(self._set_busy)
+        self.backup.restored.connect(lambda: self._lock(RESTORED_NOTICE))
 
     def _show_vault(self) -> None:
         self.main_view.refresh()
@@ -55,3 +65,18 @@ class MainWindow(QMainWindow):
             if isinstance(widget, QDialog) and widget.isVisible():
                 widget.reject()
         self._lock(IDLE_NOTICE)
+
+    def _show_message(self, message: str) -> None:
+        if self.pages.currentWidget() is self.main_view:
+            self.main_view.status.setText(message)
+        else:
+            self.unlock_view.message.setText(message)
+
+    def _set_busy(self, busy: bool) -> None:
+        # A restauração roda em segundo plano e mexe no cofre: nada mais pode agir nesse intervalo,
+        # nem o bloqueio por inatividade.
+        self.pages.setEnabled(not busy)
+        if busy:
+            self.idle_lock.stop()
+        elif self.pages.currentWidget() is self.main_view:
+            self.idle_lock.start()

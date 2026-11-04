@@ -18,6 +18,7 @@ Gerenciador de senhas desktop para Windows e Linux. Guarda contas e senhas em um
 - Uma entrada excluída permanece cifrada no `.bak` até a gravação seguinte.
 - A senha copiada fica na área de transferência por até 30 s. As marcações de conteúdo sensível só são obedecidas por gerenciadores que seguem a convenção (KDE Klipper no Linux; histórico e nuvem do Windows). Qualquer outro pode guardar a senha.
 - Revelar mostra a senha em um diálogo modal; o bloqueio automático o fecha e limpa o campo.
+- Exportar copia o arquivo já cifrado, com a mesma senha mestra. Restaurar valida o backup com a senha dele antes de tocar no cofre atual, que vai para o `.bak`; depois da restauração o cofre fica bloqueado e abre com a senha do backup.
 - A inatividade conta só a atividade dentro do aplicativo. Bloquear a tela do sistema ou suspender o computador não bloqueia o cofre por si só.
 
 ## Camadas
@@ -96,8 +97,8 @@ Conteúdo decifrado:
 | F2.1 | Conta sem usuário (checkbox no cadastro) | Concluída |
 | F3 | Revelar, copiar com limpeza, excluir | Concluída |
 | F4 | Bloqueio automático | Concluída |
-| F5 | Exportar e restaurar backup | Próxima |
-| F6 | Executáveis, CI, `pip-audit`, `docs/SEGURANCA.md` | Planejada |
+| F5 | Exportar e restaurar backup | Concluída |
+| F6 | Executáveis, CI, `pip-audit`, `docs/SEGURANCA.md` | Próxima |
 
 ## Desenvolvimento
 

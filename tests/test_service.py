@@ -6,7 +6,9 @@ import pytest
 from cofre.domain.models import DuplicateEntryError, EntryNotFoundError, InvalidEntryError
 from cofre.domain.passwords import InvalidMasterPasswordError, generate_password
 from cofre.services.vault_service import (
+    BackupError,
     ConfirmationRequiredError,
+    RestoreFailedError,
     UnlockFailedError,
     VaultAlreadyExistsError,
     VaultLockedError,
@@ -212,3 +214,148 @@ def test_duplicate_entry_without_username_is_rejected(service):
     service.add_entry("Wi-Fi", None, "senha-1")
     with pytest.raises(DuplicateEntryError):
         service.add_entry("wi-fi", None, "senha-2")
+
+
+# --- Backup (F5) ---
+
+OTHER_MASTER = "outra senha mestra!!"
+
+
+@pytest.fixture
+def backup_file(service, tmp_path):
+    service.add_entry("GitHub", "ana", "senha-1")
+    destination = tmp_path / "externo" / "copia.cofre"
+    destination.parent.mkdir()
+    service.export_backup(destination)
+    return destination
+
+
+def test_export_copies_the_encrypted_file_and_opens_with_same_password(service, path, backup_file):
+    assert backup_file.read_bytes() == path.read_bytes()
+    exported = VaultService(backup_file)
+    exported.unlock(MASTER)
+    assert [e.service for e in exported.entries()] == ["GitHub"]
+
+
+def test_export_has_no_plaintext(backup_file):
+    raw = backup_file.read_bytes()
+    assert b"GitHub" not in raw
+    assert b"senha-1" not in raw
+
+
+@pytest.mark.skipif(os.name != "posix", reason="permissões POSIX")
+def test_export_is_private(backup_file):
+    import stat
+
+    assert stat.S_IMODE(backup_file.stat().st_mode) == 0o600
+
+
+def test_export_leaves_no_temp_files(backup_file):
+    assert [item.name for item in backup_file.parent.iterdir()] == ["copia.cofre"]
+
+
+def test_export_refuses_vault_and_its_backup(service, path):
+    with pytest.raises(BackupError):
+        service.export_backup(path)
+    with pytest.raises(BackupError):
+        service.export_backup(path.with_name(path.name + ".bak"))
+
+
+def test_export_without_vault_fails(path, tmp_path):
+    with pytest.raises(VaultNotFoundError):
+        VaultService(path).export_backup(tmp_path / "x.cofre")
+
+
+def test_export_works_while_locked(service, tmp_path):
+    service.lock()
+    service.export_backup(tmp_path / "bloqueado.cofre")
+    assert (tmp_path / "bloqueado.cofre").exists()
+
+
+def test_restore_replaces_vault_and_locks(service, path, backup_file):
+    service.add_entry("Banco", "ana", "senha-2")
+    service.restore_backup(backup_file, MASTER)
+
+    assert not service.is_unlocked
+    reopened = VaultService(path)
+    reopened.unlock(MASTER)
+    assert [e.service for e in reopened.entries()] == ["GitHub"]
+
+
+def test_restore_keeps_previous_vault_as_bak(service, path, backup_file):
+    service.add_entry("Banco", "ana", "senha-2")
+    previous = path.read_bytes()
+    service.restore_backup(backup_file, MASTER)
+    assert path.with_name(path.name + ".bak").read_bytes() == previous
+
+
+def test_restore_accepts_other_master_password(path, tmp_path):
+    other_path = tmp_path / "outro.cofre"
+    other = VaultService(other_path)
+    other.create(OTHER_MASTER, OTHER_MASTER, acknowledged_no_recovery=True)
+    other.add_entry("Serviço do backup", "bia", "senha-b")
+    VaultService(path).create(MASTER, MASTER, acknowledged_no_recovery=True)
+
+    target = VaultService(path)
+    target.restore_backup(other_path, OTHER_MASTER)
+    target.unlock(OTHER_MASTER)
+    assert [e.service for e in target.entries()] == ["Serviço do backup"]
+
+
+def test_restore_with_wrong_password_changes_nothing(service, path, backup_file):
+    before = path.read_bytes()
+    with pytest.raises(RestoreFailedError):
+        service.restore_backup(backup_file, "senha errada qualquer")
+    assert path.read_bytes() == before
+    assert service.is_unlocked
+
+
+def test_restore_rejects_invalid_file_with_same_message(service, path, tmp_path, backup_file):
+    junk = tmp_path / "lixo.cofre"
+    junk.write_bytes(b"isto nao e um cofre")
+    before = path.read_bytes()
+
+    with pytest.raises(RestoreFailedError) as invalid:
+        service.restore_backup(junk, MASTER)
+    with pytest.raises(RestoreFailedError) as wrong:
+        service.restore_backup(backup_file, "senha errada qualquer")
+
+    assert str(invalid.value) == str(wrong.value)
+    assert path.read_bytes() == before
+
+
+def test_restore_rejects_tampered_backup(service, path, backup_file):
+    raw = bytearray(backup_file.read_bytes())
+    raw[-1] ^= 0x01
+    backup_file.write_bytes(bytes(raw))
+    before = path.read_bytes()
+    with pytest.raises(RestoreFailedError):
+        service.restore_backup(backup_file, MASTER)
+    assert path.read_bytes() == before
+
+
+def test_restore_refuses_the_vault_itself(service, path):
+    with pytest.raises(BackupError):
+        service.restore_backup(path, MASTER)
+
+
+def test_restore_from_automatic_bak_recovers_previous_state(service, path):
+    service.add_entry("GitHub", "ana", "senha-1")
+    service.add_entry("Banco", "ana", "senha-2")
+    service.restore_backup(path.with_name(path.name + ".bak"), MASTER)
+
+    reopened = VaultService(path)
+    reopened.unlock(MASTER)
+    assert [e.service for e in reopened.entries()] == ["GitHub"]
+
+
+def test_restore_without_existing_vault(path, backup_file, tmp_path):
+    fresh = VaultService(tmp_path / "novo" / "v.cofre")
+    fresh.restore_backup(backup_file, MASTER)
+    fresh.unlock(MASTER)
+    assert [e.service for e in fresh.entries()] == ["GitHub"]
+
+
+def test_restore_missing_source_raises_os_error(service, tmp_path):
+    with pytest.raises(OSError):
+        service.restore_backup(tmp_path / "nao-existe.cofre", MASTER)

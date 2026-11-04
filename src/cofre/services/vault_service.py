@@ -10,10 +10,12 @@ from cofre.storage.vault_file import (
     VaultAuthError,
     VaultFormatError,
     VaultKey,
+    backup_path,
     decode_vault,
     encode_vault,
     new_vault_key,
     read_vault_file,
+    write_copy,
     write_vault_file,
 )
 
@@ -35,6 +37,14 @@ class UnlockFailedError(DomainError):
 
 
 class ConfirmationRequiredError(DomainError):
+    pass
+
+
+class BackupError(DomainError):
+    pass
+
+
+class RestoreFailedError(DomainError):
     pass
 
 
@@ -93,6 +103,30 @@ class VaultService:
         if not confirmed:
             raise ConfirmationRequiredError("Confirme a exclusão da entrada.")
         self._save(vault.removed(service, username), self._key)
+
+    def export_backup(self, destination: Path) -> None:
+        """Copia o arquivo já cifrado: o backup tem a mesma senha mestra do cofre."""
+        if not self.vault_exists:
+            raise VaultNotFoundError("Nenhum cofre encontrado.")
+        if self._is_own_file(destination):
+            raise BackupError("Escolha um local diferente do arquivo do cofre.")
+        write_copy(destination, read_vault_file(self._path))
+
+    def restore_backup(self, source: Path, master_password: str) -> None:
+        """Valida o backup com a senha dele antes de tocar no cofre atual, que vai para o `.bak`."""
+        if source.resolve() == self._path.resolve():
+            raise BackupError("Escolha um arquivo diferente do cofre atual.")
+        blob = read_vault_file(source)
+        try:
+            decode_vault(blob, master_password)
+        except (VaultAuthError, VaultFormatError) as error:
+            raise RestoreFailedError("Senha incorreta ou backup inválido.") from error
+        write_vault_file(self._path, blob)
+        self.lock()
+
+    def _is_own_file(self, other: Path) -> bool:
+        own = {self._path.resolve(), backup_path(self._path).resolve()}
+        return other.resolve() in own
 
     def _require_vault(self) -> Vault:
         if self._vault is None:
