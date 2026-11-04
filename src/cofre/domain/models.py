@@ -66,6 +66,13 @@ class Vault:
     def added(self, entry: Entry) -> Vault:
         return Vault((*self.entries, entry))
 
+    def find(self, service: str, username: str | None) -> Entry:
+        key = entry_key(service, username)
+        for entry in self.entries:
+            if entry.key == key:
+                return entry
+        raise EntryNotFoundError("Entrada não encontrada.")
+
     def removed(self, service: str, username: str | None) -> Vault:
         key = entry_key(service, username)
         remaining = tuple(entry for entry in self.entries if entry.key != key)

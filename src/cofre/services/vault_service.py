@@ -82,6 +82,9 @@ class VaultService:
     def entries(self) -> list[Entry]:
         return self._require_vault().sorted_entries()
 
+    def get_password(self, service: str, username: str | None) -> str:
+        return self._require_vault().find(service, username).password
+
     def add_entry(self, service: str, username: str | None, password: str) -> None:
         self._save(self._require_vault().added(Entry(service, username, password)), self._key)
 

@@ -40,6 +40,7 @@ def main() -> int:
         return 1
 
     window = MainWindow(VaultService(data_dir / VAULT_FILE_NAME))
+    app.aboutToQuit.connect(window.main_view.clipboard_guard.clear_if_ours)
     window.show()
     exit_code = app.exec()
     QThreadPool.globalInstance().waitForDone()

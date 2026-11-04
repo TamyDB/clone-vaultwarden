@@ -16,6 +16,8 @@ Gerenciador de senhas desktop para Windows e Linux. Guarda contas e senhas em um
 - `lock()` descarta as referências à chave e aos dados, mas não apaga a memória. `str` e `bytes` são imutáveis em Python, então os valores permanecem até serem sobrescritos. O bloqueio automático reduz essa janela.
 - O tamanho do arquivo revela aproximadamente o volume de dados guardados. Não há preenchimento (padding).
 - Uma entrada excluída permanece cifrada no `.bak` até a gravação seguinte.
+- A senha copiada fica na área de transferência por até 30 s. As marcações de conteúdo sensível só são obedecidas por gerenciadores que seguem a convenção (KDE Klipper no Linux; histórico e nuvem do Windows). Qualquer outro pode guardar a senha.
+- Revelar mostra a senha em um diálogo modal. O bloqueio automático (F4) precisará fechá-lo.
 
 ## Camadas
 
@@ -77,8 +79,8 @@ Conteúdo decifrado:
 | RN1 | Serviço e senha obrigatórios; usuário obrigatório, salvo conta explicitamente sem usuário (`None`); par (serviço, usuário) único, e só uma conta sem usuário por serviço | `domain/models.py` |
 | RN2 | Senha mestra com 12+ caracteres, confirmação e ciência de que não há recuperação | `domain/passwords.py`, `services/vault_service.py` |
 | RN3 | Gerador com `secrets`: padrão 20, faixa 12 a 64, ao menos um de cada classe | `domain/passwords.py` |
-| RN4 | Senhas ocultas por padrão | `ui/` (F2 e F3) |
-| RN5 | Área de transferência limpa após 30 s, se o conteúdo não mudou | `ui/` (F3) |
+| RN4 | Senhas ocultas por padrão; revelar é ação explícita por entrada | `ui/main_view.py`, `ui/reveal_dialog.py` |
+| RN5 | Área de transferência limpa após 30 s, se o conteúdo não mudou; também ao bloquear e ao sair | `ui/clipboard.py` |
 | RN6 | Bloqueio após 5 min de inatividade | `ui/` (F4) |
 | RN7 | Excluir exige confirmação | `services/vault_service.py` |
 | RN8 | Segredos fora de logs, mensagens de erro e `repr` | todas as camadas |
@@ -91,8 +93,8 @@ Conteúdo decifrado:
 | F1 | Criar e desbloquear o cofre | Concluída |
 | F2 | Cadastrar e listar, com gerador | Concluída |
 | F2.1 | Conta sem usuário (checkbox no cadastro) | Concluída |
-| F3 | Revelar, copiar com limpeza, excluir | Próxima |
-| F4 | Bloqueio automático | Planejada |
+| F3 | Revelar, copiar com limpeza, excluir | Concluída |
+| F4 | Bloqueio automático | Próxima |
 | F5 | Exportar e restaurar backup | Planejada |
 | F6 | Executáveis, CI, `pip-audit`, `docs/SEGURANCA.md` | Planejada |
 
