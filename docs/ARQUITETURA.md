@@ -17,7 +17,8 @@ Gerenciador de senhas desktop para Windows e Linux. Guarda contas e senhas em um
 - O tamanho do arquivo revela aproximadamente o volume de dados guardados. Não há preenchimento (padding).
 - Uma entrada excluída permanece cifrada no `.bak` até a gravação seguinte.
 - A senha copiada fica na área de transferência por até 30 s. As marcações de conteúdo sensível só são obedecidas por gerenciadores que seguem a convenção (KDE Klipper no Linux; histórico e nuvem do Windows). Qualquer outro pode guardar a senha.
-- Revelar mostra a senha em um diálogo modal. O bloqueio automático (F4) precisará fechá-lo.
+- Revelar mostra a senha em um diálogo modal; o bloqueio automático o fecha e limpa o campo.
+- A inatividade conta só a atividade dentro do aplicativo. Bloquear a tela do sistema ou suspender o computador não bloqueia o cofre por si só.
 
 ## Camadas
 
@@ -81,7 +82,7 @@ Conteúdo decifrado:
 | RN3 | Gerador com `secrets`: padrão 20, faixa 12 a 64, ao menos um de cada classe | `domain/passwords.py` |
 | RN4 | Senhas ocultas por padrão; revelar é ação explícita por entrada | `ui/main_view.py`, `ui/reveal_dialog.py` |
 | RN5 | Área de transferência limpa após 30 s, se o conteúdo não mudou; também ao bloquear e ao sair | `ui/clipboard.py` |
-| RN6 | Bloqueio após 5 min de inatividade | `ui/` (F4) |
+| RN6 | Bloqueio após 5 min sem mouse ou teclado no aplicativo; fecha diálogos abertos e limpa a área de transferência | `ui/idle_lock.py`, `ui/main_window.py` |
 | RN7 | Excluir exige confirmação | `services/vault_service.py` |
 | RN8 | Segredos fora de logs, mensagens de erro e `repr` | todas as camadas |
 
@@ -94,8 +95,8 @@ Conteúdo decifrado:
 | F2 | Cadastrar e listar, com gerador | Concluída |
 | F2.1 | Conta sem usuário (checkbox no cadastro) | Concluída |
 | F3 | Revelar, copiar com limpeza, excluir | Concluída |
-| F4 | Bloqueio automático | Próxima |
-| F5 | Exportar e restaurar backup | Planejada |
+| F4 | Bloqueio automático | Concluída |
+| F5 | Exportar e restaurar backup | Próxima |
 | F6 | Executáveis, CI, `pip-audit`, `docs/SEGURANCA.md` | Planejada |
 
 ## Desenvolvimento

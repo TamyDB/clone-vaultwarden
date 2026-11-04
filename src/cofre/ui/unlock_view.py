@@ -57,7 +57,7 @@ class UnlockView(QWidget):
         self.submit.clicked.connect(self._submit)
         self.reset()
 
-    def reset(self) -> None:
+    def reset(self, notice: str = "") -> None:
         """Volta ao estado inicial, sem restos de senha nos campos."""
         self._creating = not self._service.vault_exists
         self.title.setText("Criar novo cofre" if self._creating else "Abrir cofre")
@@ -66,7 +66,7 @@ class UnlockView(QWidget):
         self._form.setRowVisible(self.acknowledgement, self._creating)
         self._clear_secrets()
         self.acknowledgement.setChecked(False)
-        self.message.clear()
+        self.message.setText(notice)
         self._set_busy(False)
         self.password.setFocus()
 
