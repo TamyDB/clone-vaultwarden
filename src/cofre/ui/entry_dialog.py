@@ -28,10 +28,16 @@ from cofre.ui.workers import DISK_ERROR_MESSAGE
 
 
 class EntryDialog(QDialog):
-    def __init__(self, service: VaultService, parent: QWidget | None = None) -> None:
+    def __init__(
+        self,
+        service: VaultService,
+        parent: QWidget | None = None,
+        editing: tuple[str, str | None] | None = None,
+    ) -> None:
         super().__init__(parent)
         self._service = service
-        self.setWindowTitle("Nova entrada")
+        self._editing = editing
+        self.setWindowTitle("Editar entrada" if editing else "Nova entrada")
 
         self.service_field = QLineEdit()
         self.username_field = QLineEdit()
@@ -89,6 +95,20 @@ class EntryDialog(QDialog):
         self.generate_button.clicked.connect(self._generate)
         self.cancel_button.clicked.connect(self.reject)
         self.save_button.clicked.connect(self._save)
+        if editing is not None:
+            self._load(*editing)
+
+    def _load(self, service_name: str, username: str | None) -> None:
+        password = self._service.get_password(service_name, username)
+        self.service_field.setText(service_name)
+        self.has_username.setChecked(username is not None)
+        self.username_field.setText(username or "")
+        self.password_field.setText(password)
+
+    def done(self, result: int) -> None:
+        # Ao editar, a senha atual está no campo: não deve sobrar nele depois de fechar.
+        self.password_field.clear()
+        super().done(result)
 
     def _toggle_password(self, visible: bool) -> None:
         self.password_field.setEchoMode(
@@ -111,10 +131,17 @@ class EntryDialog(QDialog):
         self.password_field.setText(generate_password(policy))
         self.message.clear()
 
+    def _persist(self, username: str | None) -> None:
+        name, password = self.service_field.text(), self.password_field.text()
+        if self._editing is None:
+            self._service.add_entry(name, username, password)
+        else:
+            self._service.update_entry(*self._editing, name, username, password)
+
     def _save(self) -> None:
         username = self.username_field.text() if self.has_username.isChecked() else None
         try:
-            self._service.add_entry(self.service_field.text(), username, self.password_field.text())
+            self._persist(username)
         except DomainError as error:
             self.message.setText(str(error))
         except OSError:

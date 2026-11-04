@@ -8,7 +8,7 @@ Gerenciador de senhas local para Windows e Linux. Guarda contas e senhas em um �
 
 - Cria o cofre protegido por uma **senha mestra** (sem recuperação: se esquecer, os dados se perdem).
 - **Cadastra** contas (serviço, usuário e senha), com **gerador de senha forte** configurável ou senha própria. A conta pode não ter usuário.
-- **Lista, revela, copia e exclui** entradas. A senha copiada é apagada da área de transferência em 30 s.
+- **Lista, revela, copia, edita e exclui** entradas. A senha copiada é apagada da área de transferência em 30 s.
 - **Bloqueia sozinho** após 5 minutos de inatividade.
 - **Exporta e restaura backups** criptografados.
 

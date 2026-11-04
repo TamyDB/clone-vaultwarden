@@ -98,6 +98,17 @@ class VaultService:
     def add_entry(self, service: str, username: str | None, password: str) -> None:
         self._save(self._require_vault().added(Entry(service, username, password)), self._key)
 
+    def update_entry(
+        self,
+        service: str,
+        username: str | None,
+        new_service: str,
+        new_username: str | None,
+        new_password: str,
+    ) -> None:
+        updated = Entry(new_service, new_username, new_password)
+        self._save(self._require_vault().replaced(service, username, updated), self._key)
+
     def delete_entry(self, service: str, username: str | None, *, confirmed: bool) -> None:
         vault = self._require_vault()
         if not confirmed:

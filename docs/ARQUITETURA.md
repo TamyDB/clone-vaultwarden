@@ -99,6 +99,7 @@ Conteúdo decifrado:
 | F4 | Bloqueio automático | Concluída |
 | F5 | Exportar e restaurar backup | Concluída |
 | F6 | Executáveis, CI, `pip-audit`, `docs/SEGURANCA.md` | Concluída (Windows sem teste) |
+| F7 | Editar entrada (pós-MVP) | Concluída |
 
 ## Desenvolvimento
 

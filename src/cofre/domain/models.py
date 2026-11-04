@@ -73,6 +73,13 @@ class Vault:
                 return entry
         raise EntryNotFoundError("Entrada não encontrada.")
 
+    def replaced(self, service: str, username: str | None, new_entry: Entry) -> Vault:
+        """Troca uma entrada mantendo a posição; falha se a nova identidade colidir com outra."""
+        key = entry_key(service, username)
+        if not any(entry.key == key for entry in self.entries):
+            raise EntryNotFoundError("Entrada não encontrada.")
+        return Vault(tuple(new_entry if entry.key == key else entry for entry in self.entries))
+
     def removed(self, service: str, username: str | None) -> Vault:
         key = entry_key(service, username)
         remaining = tuple(entry for entry in self.entries if entry.key != key)

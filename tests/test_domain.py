@@ -150,3 +150,31 @@ def test_removed_finds_entry_without_username():
 def test_entries_without_username_sort_before_those_with_one():
     vault = Vault((Entry("Wi-Fi", "ana", "x"), Entry("Wi-Fi", None, "x")))
     assert [entry.username for entry in vault.sorted_entries()] == [None, "ana"]
+
+
+def test_replaced_keeps_position_and_returns_new_vault():
+    original = Vault((Entry("A", "x", "1"), Entry("B", "y", "2"), Entry("C", "z", "3")))
+    changed = original.replaced("b", "Y", Entry("B2", None, "novo"))
+
+    assert [(e.service, e.username, e.password) for e in changed.entries] == [
+        ("A", "x", "1"),
+        ("B2", None, "novo"),
+        ("C", "z", "3"),
+    ]
+    assert original.entries[1].service == "B"
+
+
+def test_replaced_allows_keeping_the_same_identity():
+    vault = Vault((Entry("A", "x", "1"),))
+    assert vault.replaced("A", "x", Entry("a", "X", "nova")).entries[0].password == "nova"
+
+
+def test_replaced_rejects_collision_with_another_entry():
+    vault = Vault((Entry("A", "x", "1"), Entry("B", "y", "2")))
+    with pytest.raises(DuplicateEntryError):
+        vault.replaced("B", "y", Entry("a", "X", "2"))
+
+
+def test_replaced_missing_entry_fails():
+    with pytest.raises(EntryNotFoundError):
+        Vault().replaced("A", "x", Entry("A", "x", "1"))

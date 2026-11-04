@@ -51,6 +51,7 @@ class MainView(QWidget):
         self.lock_button = QPushButton("Bloquear")
         self.reveal_button = QPushButton("Revelar")
         self.copy_button = QPushButton("Copiar")
+        self.edit_button = QPushButton("Editar")
         self.delete_button = QPushButton("Excluir")
         self.add_button.clicked.connect(self._add_entry)
         self.lock_button.clicked.connect(self.lock_requested)
@@ -58,6 +59,7 @@ class MainView(QWidget):
         self.restore_button.clicked.connect(self.restore_requested)
         self.reveal_button.clicked.connect(self._reveal)
         self.copy_button.clicked.connect(self._copy)
+        self.edit_button.clicked.connect(self._edit)
         self.delete_button.clicked.connect(self._delete)
 
         toolbar = QHBoxLayout()
@@ -80,6 +82,7 @@ class MainView(QWidget):
         actions = QHBoxLayout()
         actions.addWidget(self.reveal_button)
         actions.addWidget(self.copy_button)
+        actions.addWidget(self.edit_button)
         actions.addStretch()
         actions.addWidget(self.delete_button)
 
@@ -128,7 +131,7 @@ class MainView(QWidget):
 
     def _update_buttons(self) -> None:
         has_selection = self._selected_key() is not None
-        for button in (self.reveal_button, self.copy_button, self.delete_button):
+        for button in (self.reveal_button, self.copy_button, self.edit_button, self.delete_button):
             button.setEnabled(has_selection)
 
     def _add_entry(self) -> None:
@@ -136,6 +139,20 @@ class MainView(QWidget):
         if dialog.exec() == EntryDialog.DialogCode.Accepted:
             self.refresh()
             self.status.clear()
+        dialog.deleteLater()
+
+    def _edit(self) -> None:
+        key = self._selected_key()
+        if key is None:
+            return
+        try:
+            dialog = EntryDialog(self._service, self, editing=key)
+        except DomainError as error:
+            self.status.setText(str(error))
+            return
+        if dialog.exec() == EntryDialog.DialogCode.Accepted:
+            self.refresh()
+            self.status.setText("Entrada atualizada.")
         dialog.deleteLater()
 
     def _reveal(self) -> None:

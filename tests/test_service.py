@@ -359,3 +359,51 @@ def test_restore_without_existing_vault(path, backup_file, tmp_path):
 def test_restore_missing_source_raises_os_error(service, tmp_path):
     with pytest.raises(OSError):
         service.restore_backup(tmp_path / "nao-existe.cofre", MASTER)
+
+
+def test_update_entry_persists_and_keeps_others(service, path):
+    service.add_entry("GitHub", "ana", "senha-1")
+    service.add_entry("Banco", "ana", "senha-2")
+    service.update_entry("GitHub", "ana", "GitLab", None, "nova-senha")
+
+    reopened = VaultService(path)
+    reopened.unlock(MASTER)
+    assert [(e.service, e.username, e.password) for e in reopened.entries()] == [
+        ("Banco", "ana", "senha-2"),
+        ("GitLab", None, "nova-senha"),
+    ]
+
+
+def test_update_entry_validates_and_rejects_collisions(service, path):
+    service.add_entry("GitHub", "ana", "senha-1")
+    service.add_entry("Banco", "ana", "senha-2")
+    before = path.read_bytes()
+
+    with pytest.raises(InvalidEntryError):
+        service.update_entry("GitHub", "ana", "GitHub", "", "x")
+    with pytest.raises(DuplicateEntryError):
+        service.update_entry("GitHub", "ana", "banco", "ANA", "x")
+    with pytest.raises(EntryNotFoundError):
+        service.update_entry("Nada", "ana", "Nada", "ana", "x")
+    assert path.read_bytes() == before
+
+
+def test_update_entry_requires_unlocked_vault(service):
+    service.add_entry("GitHub", "ana", "senha-1")
+    service.lock()
+    with pytest.raises(VaultLockedError):
+        service.update_entry("GitHub", "ana", "GitHub", "ana", "x")
+
+
+def test_update_keeps_memory_consistent_when_disk_fails(service, monkeypatch):
+    service.add_entry("GitHub", "ana", "senha-1")
+
+    def fail(*_args):
+        raise OSError("disco cheio")
+
+    monkeypatch.setattr(os, "replace", fail)
+    with pytest.raises(OSError, match="disco cheio"):
+        service.update_entry("GitHub", "ana", "GitHub", "ana", "nova")
+    monkeypatch.undo()
+
+    assert [e.password for e in service.entries()] == ["senha-1"]

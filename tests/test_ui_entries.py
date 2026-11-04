@@ -5,6 +5,7 @@ import pytest
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QLineEdit
 
+from cofre.domain.models import EntryNotFoundError
 from cofre.services.vault_service import VaultService
 from cofre.ui import main_view
 from cofre.ui.entry_dialog import EntryDialog
@@ -143,8 +144,7 @@ def test_enter_saves_instead_of_generating(qtbot, dialog, service):
     fill(dialog)
     qtbot.keyClick(dialog.password_field, Qt.Key.Key_Return)
 
-    assert dialog.password_field.text() == "senha-1"
-    assert len(service.entries()) == 1
+    assert [e.password for e in service.entries()] == ["senha-1"]
 
 
 def test_cancel_saves_nothing(dialog, service):
@@ -255,3 +255,116 @@ def test_table_marks_missing_username(qtbot, service):
     literal = view.table.item(0, 1)
     assert (missing.text(), missing.font().italic()) == ("(sem usuário)", True)
     assert (literal.text(), literal.font().italic()) == ("(sem usuário)", False)
+
+
+# --- Edição ---
+
+
+@pytest.fixture
+def edit_dialog(qtbot, service):
+    service.add_entry("GitHub", "ana", "senha-1")
+    created = EntryDialog(service, editing=("GitHub", "ana"))
+    qtbot.addWidget(created)
+    return created
+
+
+def test_edit_dialog_is_prefilled_with_password_hidden(edit_dialog):
+    assert edit_dialog.windowTitle() == "Editar entrada"
+    assert edit_dialog.service_field.text() == "GitHub"
+    assert edit_dialog.username_field.text() == "ana"
+    assert edit_dialog.has_username.isChecked()
+    assert edit_dialog.password_field.text() == "senha-1"
+    assert edit_dialog.password_field.echoMode() == QLineEdit.EchoMode.Password
+
+
+def test_edit_dialog_for_entry_without_username(qtbot, service):
+    service.add_entry("Wi-Fi", None, "senha-wifi")
+    dialog = EntryDialog(service, editing=("Wi-Fi", None))
+    qtbot.addWidget(dialog)
+    assert not dialog.has_username.isChecked()
+    assert not dialog.username_field.isEnabled()
+
+
+def test_edit_saves_changes_in_place(edit_dialog, service, path):
+    edit_dialog.service_field.setText("GitLab")
+    edit_dialog.password_field.setText("nova-senha")
+    edit_dialog.save_button.click()
+
+    assert edit_dialog.result() == EntryDialog.DialogCode.Accepted
+    reopened = VaultService(path)
+    reopened.unlock(MASTER)
+    assert [(e.service, e.username, e.password) for e in reopened.entries()] == [
+        ("GitLab", "ana", "nova-senha")
+    ]
+
+
+def test_edit_can_remove_the_username(edit_dialog, service):
+    edit_dialog.has_username.setChecked(False)
+    edit_dialog.save_button.click()
+    assert [e.username for e in service.entries()] == [None]
+
+
+def test_edit_collision_keeps_dialog_and_vault(edit_dialog, service):
+    service.add_entry("Banco", "ana", "senha-2")
+    edit_dialog.service_field.setText("banco")
+    edit_dialog.save_button.click()
+
+    assert "Já existe" in edit_dialog.message.text()
+    assert edit_dialog.result() != EntryDialog.DialogCode.Accepted
+    assert sorted(e.service for e in service.entries()) == ["Banco", "GitHub"]
+
+
+def test_edit_generate_replaces_password_field(edit_dialog):
+    edit_dialog.generate_button.click()
+    assert edit_dialog.password_field.text() != "senha-1"
+    assert len(edit_dialog.password_field.text()) == 20
+
+
+def test_edit_dialog_wipes_password_when_closed(edit_dialog):
+    edit_dialog.show()
+    edit_dialog.cancel_button.click()
+    assert edit_dialog.password_field.text() == ""
+
+
+def test_edit_cancel_changes_nothing(edit_dialog, service):
+    edit_dialog.password_field.setText("outra")
+    edit_dialog.cancel_button.click()
+    assert [e.password for e in service.entries()] == ["senha-1"]
+
+
+def test_edit_for_missing_entry_raises_domain_error(service):
+    with pytest.raises(EntryNotFoundError):
+        EntryDialog(service, editing=("Nada", "ninguém"))
+
+
+def test_edit_button_needs_selection_and_updates_table(qtbot, service, monkeypatch):
+    service.add_entry("GitHub", "ana", "senha-1")
+    view = MainView(service)
+    qtbot.addWidget(view)
+    view.refresh()
+    assert not view.edit_button.isEnabled()
+
+    def fake_exec(dialog):
+        dialog.service_field.setText("GitLab")
+        dialog.save_button.click()
+        return dialog.result()
+
+    monkeypatch.setattr(main_view.EntryDialog, "exec", fake_exec)
+    view.table.selectRow(0)
+    assert view.edit_button.isEnabled()
+    view.edit_button.click()
+
+    assert table_rows(view) == [("GitLab", "ana")]
+    assert view.status.text() == "Entrada atualizada."
+
+
+def test_edit_cancelled_leaves_table_untouched(qtbot, service, monkeypatch):
+    service.add_entry("GitHub", "ana", "senha-1")
+    view = MainView(service)
+    qtbot.addWidget(view)
+    view.refresh()
+    monkeypatch.setattr(main_view.EntryDialog, "exec", fake_exec({}, click_save=False))
+    view.table.selectRow(0)
+    view.edit_button.click()
+    assert table_rows(view) == [("GitHub", "ana")]
+    assert view.status.text() == ""
