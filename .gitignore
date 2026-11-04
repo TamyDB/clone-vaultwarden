@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+build/
+dist/
+
+# Cofres e backups nunca devem ir para o repositório, mesmo cifrados
+*.cofre
+*.cofre.bak
