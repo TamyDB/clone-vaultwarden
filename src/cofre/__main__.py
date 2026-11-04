@@ -8,6 +8,7 @@ from pathlib import Path
 from PySide6.QtCore import QLockFile, QStandardPaths, QThreadPool
 from PySide6.QtWidgets import QApplication, QMessageBox
 
+from cofre.selftest import SELF_TEST_FLAG, run_self_test
 from cofre.services.vault_service import VaultService
 from cofre.ui.main_window import MainWindow
 
@@ -22,6 +23,8 @@ def acquire_instance_lock(data_dir: Path) -> QLockFile | None:
 
 
 def main() -> int:
+    if SELF_TEST_FLAG in sys.argv[1:]:
+        return run_self_test()
     app = QApplication(sys.argv)
     app.setApplicationName("Cofre")
 

@@ -1,0 +1,3 @@
+# Dependências diretas de execução. O arquivo requirements.lock é gerado a partir deste.
+cryptography>=50
+PySide6-Essentials>=6.12

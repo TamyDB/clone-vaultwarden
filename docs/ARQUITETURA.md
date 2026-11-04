@@ -98,7 +98,7 @@ Conteúdo decifrado:
 | F3 | Revelar, copiar com limpeza, excluir | Concluída |
 | F4 | Bloqueio automático | Concluída |
 | F5 | Exportar e restaurar backup | Concluída |
-| F6 | Executáveis, CI, `pip-audit`, `docs/SEGURANCA.md` | Próxima |
+| F6 | Executáveis, CI, `pip-audit`, `docs/SEGURANCA.md` | Concluída (Windows sem teste) |
 
 ## Desenvolvimento
 
@@ -109,4 +109,4 @@ python3 -m venv .venv
 .venv/bin/ruff check .
 ```
 
-No Windows, os executáveis ficam em `.venv\Scripts\`.
+No Windows, os executáveis ficam em `.venv\Scripts\`. Empacotamento, dependências e CI estão no [README](../README.md); o guia de uso seguro está em [SEGURANCA.md](SEGURANCA.md).
