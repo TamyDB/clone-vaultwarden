@@ -74,7 +74,7 @@ Conteúdo decifrado:
 
 | # | Regra | Onde |
 |---|---|---|
-| RN1 | Serviço, usuário e senha obrigatórios; par (serviço, usuário) único | `domain/models.py` |
+| RN1 | Serviço e senha obrigatórios; usuário obrigatório, salvo conta explicitamente sem usuário (`None`); par (serviço, usuário) único, e só uma conta sem usuário por serviço | `domain/models.py` |
 | RN2 | Senha mestra com 12+ caracteres, confirmação e ciência de que não há recuperação | `domain/passwords.py`, `services/vault_service.py` |
 | RN3 | Gerador com `secrets`: padrão 20, faixa 12 a 64, ao menos um de cada classe | `domain/passwords.py` |
 | RN4 | Senhas ocultas por padrão | `ui/` (F2 e F3) |
@@ -90,6 +90,7 @@ Conteúdo decifrado:
 | Núcleo | Regras, criptografia, arquivo | Concluída |
 | F1 | Criar e desbloquear o cofre | Concluída |
 | F2 | Cadastrar e listar, com gerador | Concluída |
+| F2.1 | Conta sem usuário (checkbox no cadastro) | Concluída |
 | F3 | Revelar, copiar com limpeza, excluir | Próxima |
 | F4 | Bloqueio automático | Planejada |
 | F5 | Exportar e restaurar backup | Planejada |

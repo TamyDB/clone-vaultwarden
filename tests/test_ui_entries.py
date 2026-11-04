@@ -209,3 +209,49 @@ def test_entries_survive_lock_and_table_is_cleared_while_locked(qtbot, path, ser
     with qtbot.waitSignal(unlock.unlocked, timeout=10000):
         unlock.submit.click()
     assert table_rows(window.main_view) == [("GitHub", "ana")]
+
+
+def test_username_checkbox_is_checked_by_default(dialog):
+    assert dialog.has_username.isChecked()
+    assert dialog.username_field.isEnabled()
+
+
+def test_unchecking_disables_field_and_keeps_typed_text(dialog):
+    dialog.username_field.setText("ana")
+    dialog.has_username.setChecked(False)
+    assert not dialog.username_field.isEnabled()
+    assert dialog.username_field.text() == "ana"
+
+    dialog.has_username.setChecked(True)
+    assert dialog.username_field.isEnabled()
+    assert dialog.username_field.text() == "ana"
+
+
+def test_unchecked_saves_entry_without_username_ignoring_typed_text(dialog, service):
+    fill(dialog, service="Wi-Fi", username="texto-ignorado")
+    dialog.has_username.setChecked(False)
+    dialog.save_button.click()
+
+    assert dialog.result() == EntryDialog.DialogCode.Accepted
+    assert [(e.service, e.username) for e in service.entries()] == [("Wi-Fi", None)]
+
+
+def test_checked_with_empty_username_still_asks_for_it(dialog, service):
+    fill(dialog, username="")
+    dialog.save_button.click()
+
+    assert dialog.message.text() == "Informe o usuário."
+    assert service.entries() == []
+
+
+def test_table_marks_missing_username(qtbot, service):
+    service.add_entry("Wi-Fi", None, "senha-1")
+    service.add_entry("Banco", "(sem usuário)", "senha-2")
+    view = MainView(service)
+    qtbot.addWidget(view)
+    view.refresh()
+
+    missing = view.table.item(1, 1)
+    literal = view.table.item(0, 1)
+    assert (missing.text(), missing.font().italic()) == ("(sem usuário)", True)
+    assert (literal.text(), literal.font().italic()) == ("(sem usuário)", False)

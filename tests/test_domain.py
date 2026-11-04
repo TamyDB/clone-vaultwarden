@@ -110,3 +110,43 @@ def test_master_password_rules():
         validate_new_master_password("x" * 11, "x" * 11)
     with pytest.raises(InvalidMasterPasswordError):
         validate_new_master_password("x" * 12, "y" * 12)
+
+
+def test_entry_without_username_is_valid():
+    entry = Entry("Wi-Fi", None, "senha-1")
+    assert entry.username is None
+
+
+@pytest.mark.parametrize("username", ["", "   "])
+def test_blank_username_is_still_invalid(username):
+    with pytest.raises(InvalidEntryError, match="usuário"):
+        Entry("Wi-Fi", username, "senha-1")
+
+
+def test_entry_without_username_still_requires_service_and_password():
+    with pytest.raises(InvalidEntryError):
+        Entry("", None, "senha-1")
+    with pytest.raises(InvalidEntryError):
+        Entry("Wi-Fi", None, "")
+
+
+def test_only_one_entry_without_username_per_service():
+    vault = Vault().added(Entry("Wi-Fi", None, "a"))
+    with pytest.raises(DuplicateEntryError):
+        vault.added(Entry(" wi-fi ", None, "b"))
+
+
+def test_same_service_with_and_without_username_coexist():
+    vault = Vault().added(Entry("Wi-Fi", None, "a")).added(Entry("Wi-Fi", "ana", "b"))
+    assert len(vault.entries) == 2
+
+
+def test_removed_finds_entry_without_username():
+    vault = Vault().added(Entry("Wi-Fi", None, "a")).added(Entry("Wi-Fi", "ana", "b"))
+    remaining = vault.removed("wi-fi", None).entries
+    assert [entry.username for entry in remaining] == ["ana"]
+
+
+def test_entries_without_username_sort_before_those_with_one():
+    vault = Vault((Entry("Wi-Fi", "ana", "x"), Entry("Wi-Fi", None, "x")))
+    assert [entry.username for entry in vault.sorted_entries()] == [None, "ana"]

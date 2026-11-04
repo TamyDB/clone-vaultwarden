@@ -183,3 +183,32 @@ def test_full_flow_never_uses_network(path, monkeypatch):
     service.lock()
     service.unlock(MASTER)
     service.delete_entry("GitHub", "ana", confirmed=True)
+
+
+def test_entry_without_username_persists_after_reopening(service, path):
+    service.add_entry("Wi-Fi", None, "senha-1")
+    service.add_entry("Wi-Fi", "ana", "senha-2")
+
+    reopened = VaultService(path)
+    reopened.unlock(MASTER)
+
+    assert [(e.username, e.password) for e in reopened.entries()] == [
+        (None, "senha-1"),
+        ("ana", "senha-2"),
+    ]
+
+
+def test_delete_entry_without_username(service, path):
+    service.add_entry("Wi-Fi", None, "senha-1")
+    service.add_entry("Wi-Fi", "ana", "senha-2")
+    service.delete_entry("Wi-Fi", None, confirmed=True)
+
+    reopened = VaultService(path)
+    reopened.unlock(MASTER)
+    assert [e.username for e in reopened.entries()] == ["ana"]
+
+
+def test_duplicate_entry_without_username_is_rejected(service):
+    service.add_entry("Wi-Fi", None, "senha-1")
+    with pytest.raises(DuplicateEntryError):
+        service.add_entry("wi-fi", None, "senha-2")

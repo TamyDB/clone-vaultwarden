@@ -194,3 +194,21 @@ def test_vault_and_backup_are_private(tmp_path):
     write_vault_file(path, b"dois")
     assert stat.S_IMODE(path.stat().st_mode) == 0o600
     assert stat.S_IMODE(backup_path(path).stat().st_mode) == 0o600
+
+
+def test_round_trip_keeps_entry_without_username():
+    vault = Vault((Entry("Wi-Fi", None, "senha-1"), Entry("Wi-Fi", "ana", "senha-2")))
+    decoded, _ = decode_vault(encode_vault(vault, new_vault_key(MASTER)), MASTER)
+    assert decoded == vault
+    assert {entry.username for entry in decoded.entries} == {None, "ana"}
+
+
+@pytest.mark.parametrize("username", ["1", "true", '"  "', "[]"])
+def test_authentic_content_with_invalid_username_does_not_leak(username, monkeypatch):
+    document = {"entries": [{"service": "a", "username": json.loads(username), "password": "c"}]}
+    plaintext = json.dumps(document).encode()
+    monkeypatch.setattr(vault_file, "_serialize", lambda _vault: plaintext)
+    blob = encode_vault(Vault(), new_vault_key(MASTER))
+    with pytest.raises(VaultFormatError) as caught:
+        decode_vault(blob, MASTER)
+    assert caught.value.__cause__ is None

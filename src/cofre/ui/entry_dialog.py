@@ -35,6 +35,7 @@ class EntryDialog(QDialog):
 
         self.service_field = QLineEdit()
         self.username_field = QLineEdit()
+        self.has_username = QCheckBox("Esta conta tem usuário", checked=True)
         self.password_field = QLineEdit(echoMode=QLineEdit.EchoMode.Password)
         self.show_button = QPushButton("Mostrar", checkable=True, autoDefault=False)
         self.length_field = QSpinBox(
@@ -68,6 +69,7 @@ class EntryDialog(QDialog):
         form = QFormLayout()
         form.addRow("Serviço", self.service_field)
         form.addRow("Usuário", self.username_field)
+        form.addRow(self.has_username)
         form.addRow("Senha", password_row)
         form.addRow("Incluir", classes_row)
         form.addRow(generator_row)
@@ -82,6 +84,7 @@ class EntryDialog(QDialog):
         layout.addWidget(self.message)
         layout.addLayout(buttons)
 
+        self.has_username.toggled.connect(self.username_field.setEnabled)
         self.show_button.toggled.connect(self._toggle_password)
         self.generate_button.clicked.connect(self._generate)
         self.cancel_button.clicked.connect(self.reject)
@@ -109,10 +112,9 @@ class EntryDialog(QDialog):
         self.message.clear()
 
     def _save(self) -> None:
+        username = self.username_field.text() if self.has_username.isChecked() else None
         try:
-            self._service.add_entry(
-                self.service_field.text(), self.username_field.text(), self.password_field.text()
-            )
+            self._service.add_entry(self.service_field.text(), username, self.password_field.text())
         except DomainError as error:
             self.message.setText(str(error))
         except OSError:

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Signal
+from PySide6.QtGui import QPalette
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QHBoxLayout,
@@ -16,6 +17,8 @@ from PySide6.QtWidgets import (
 
 from cofre.services.vault_service import VaultService
 from cofre.ui.entry_dialog import EntryDialog
+
+NO_USERNAME_LABEL = "(sem usuário)"
 
 
 class MainView(QWidget):
@@ -52,7 +55,18 @@ class MainView(QWidget):
         self.table.setRowCount(len(entries))
         for row, entry in enumerate(entries):
             self.table.setItem(row, 0, QTableWidgetItem(entry.service))
-            self.table.setItem(row, 1, QTableWidgetItem(entry.username))
+            self.table.setItem(row, 1, self._username_item(entry.username))
+
+    def _username_item(self, username: str | None) -> QTableWidgetItem:
+        if username is not None:
+            return QTableWidgetItem(username)
+        # Itálico e cinza para não ser confundido com um usuário chamado "(sem usuário)".
+        item = QTableWidgetItem(NO_USERNAME_LABEL)
+        font = item.font()
+        font.setItalic(True)
+        item.setFont(font)
+        item.setForeground(self.palette().color(QPalette.ColorRole.PlaceholderText))
+        return item
 
     def clear(self) -> None:
         self.table.setRowCount(0)

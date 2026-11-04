@@ -24,15 +24,17 @@ class EntryNotFoundError(DomainError):
 @dataclass(frozen=True, slots=True)
 class Entry:
     service: str
-    username: str
+    username: str | None
     password: str = field(repr=False)
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "service", self.service.strip())
-        object.__setattr__(self, "username", self.username.strip())
+        if self.username is not None:
+            object.__setattr__(self, "username", self.username.strip())
         if not self.service:
             raise InvalidEntryError("Informe o serviço.")
-        if not self.username:
+        # None é a escolha explícita de "sem usuário"; texto vazio é campo esquecido.
+        if self.username == "":
             raise InvalidEntryError("Informe o usuário.")
         if not self.password:
             raise InvalidEntryError("Informe a senha.")
@@ -42,9 +44,12 @@ class Entry:
         return entry_key(self.service, self.username)
 
 
-def entry_key(service: str, username: str) -> tuple[str, str]:
-    """Identidade de uma entrada: "GitHub" e "github" são o mesmo serviço (RN1)."""
-    return service.strip().casefold(), username.strip().casefold()
+def entry_key(service: str, username: str | None) -> tuple[str, str]:
+    """Identidade de uma entrada: "GitHub" e "github" são o mesmo serviço (RN1).
+
+    Sem usuário equivale a usuário vazio, que nenhuma entrada com usuário pode ter.
+    """
+    return service.strip().casefold(), (username or "").strip().casefold()
 
 
 @dataclass(frozen=True, slots=True)
@@ -61,7 +66,7 @@ class Vault:
     def added(self, entry: Entry) -> Vault:
         return Vault((*self.entries, entry))
 
-    def removed(self, service: str, username: str) -> Vault:
+    def removed(self, service: str, username: str | None) -> Vault:
         key = entry_key(service, username)
         remaining = tuple(entry for entry in self.entries if entry.key != key)
         if len(remaining) == len(self.entries):

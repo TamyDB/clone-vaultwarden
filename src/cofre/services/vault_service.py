@@ -82,10 +82,10 @@ class VaultService:
     def entries(self) -> list[Entry]:
         return self._require_vault().sorted_entries()
 
-    def add_entry(self, service: str, username: str, password: str) -> None:
+    def add_entry(self, service: str, username: str | None, password: str) -> None:
         self._save(self._require_vault().added(Entry(service, username, password)), self._key)
 
-    def delete_entry(self, service: str, username: str, *, confirmed: bool) -> None:
+    def delete_entry(self, service: str, username: str | None, *, confirmed: bool) -> None:
         vault = self._require_vault()
         if not confirmed:
             raise ConfirmationRequiredError("Confirme a exclusão da entrada.")
