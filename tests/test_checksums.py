@@ -36,6 +36,11 @@ def test_does_not_hash_its_own_output_on_rerun(checksums, tmp_path):
     assert len((tmp_path / "SHA256SUMS").read_text(encoding="utf-8").splitlines()) == 1
 
 
+def test_uses_lf_line_endings_on_every_platform(checksums, tmp_path):
+    (tmp_path / "a.bin").write_bytes(b"x")
+    assert b"\r" not in checksums.write_checksums(tmp_path).read_bytes()
+
+
 def test_empty_folder_is_an_error(checksums, tmp_path):
     with pytest.raises(SystemExit):
         checksums.write_checksums(tmp_path)
