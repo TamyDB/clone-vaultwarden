@@ -86,7 +86,7 @@ jobs:
           $process = Start-Process -FilePath dist\cofre.exe -ArgumentList '--self-test' -Wait -PassThru
           if ($process.ExitCode -ne 0) { throw "Autoteste falhou: $($process.ExitCode)" }
       - run: python scripts/checksums.py dist
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: cofre-${{ runner.os }}
           path: dist/*
