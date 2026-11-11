@@ -17,7 +17,7 @@ cofre = "cofre.__main__:main"
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=8",
+    "pytest>=9.2.0",
     "pytest-qt>=4.4",
     "ruff>=0.17.4",
 ]
