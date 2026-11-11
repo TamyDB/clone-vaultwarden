@@ -19,7 +19,7 @@ cofre = "cofre.__main__:main"
 dev = [
     "pytest>=8",
     "pytest-qt>=4.4",
-    "ruff>=0.8",
+    "ruff>=0.17.4",
 ]
 build = [
     "pyinstaller>=6.22",
