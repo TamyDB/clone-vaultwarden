@@ -27,7 +27,8 @@ def write_checksums(folder: Path) -> Path:
         raise SystemExit(f"Nenhum arquivo em {folder}")
     lines = [f"{sha256_of(item)}  {item.name}\n" for item in files]
     output = folder / OUTPUT_NAME
-    output.write_text("".join(lines), encoding="utf-8")
+    # newline="\n": no Windows o padrão vira CRLF e o `sha256sum -c` lê "cofre\r" como nome.
+    output.write_text("".join(lines), encoding="utf-8", newline="\n")
     return output
 
 
